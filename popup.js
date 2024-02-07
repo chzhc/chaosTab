@@ -13,16 +13,19 @@
 // limitations under the License.
 
 var urlAll = '<all_urls>'
-var searchWord = ''
+var searchUrlWord = ''
+var searchTitleWord = ''
 
 var validURLs = [
   // 'https://developer.chrome.com/docs/webstore/*',
   // 'https://developer.chrome.com/docs/extensions/*',
   urlAll
 ]
+chrome.action
 var tabs = await chrome.tabs.query({
   url: validURLs
 });
+
 async function updateTabs() {
   tabs = await chrome.tabs.query({
     url: validURLs
@@ -42,44 +45,45 @@ function refreshExt() {
 
   const elements = new Set();
   for (const tab of tabs) {
-    console.log("result", tab.url.includes(searchWord))
-    if (searchWord && !tab.url.includes(searchWord)) {
-      continue
+    // console.log("result", tab.url.includes(searchUrlWord))
+    // tab.tabGroups
+    if (tab.url.includes(searchUrlWord) && new RegExp(searchTitleWord).test(tab.title)) {
+    
+      const element = template.content.firstElementChild.cloneNode(true);
+      // const title = tab.title.split('-')[0].trim();
+
+      const title = tab.title
+      // const pathname = new URL(tab.url).pathname.slice('/docs'.length);
+      const pathname = tab.url
+      element.querySelector('.title').textContent = title;
+      element.querySelector('.pathname').textContent = pathname;
+      element.querySelector('a').addEventListener('click', async () => {
+        // need to focus window as well as the active tab
+        await chrome.tabs.update(tab.id, { active: true });
+        await chrome.windows.update(tab.windowId, { focused: true });
+
+        // await updateTabs()
+      });
+      element.querySelector('button').addEventListener('click', async () => {
+        await chrome.tabs.remove(tab.id, () => { });
+
+        // try {
+        //   const result = await updateTabs(); // 等待异步函数的结果
+        //   if (result) {
+        //     // 执行同步函数
+        //     refreshExt()
+        //   }
+        // } catch (error) {
+        //   // 处理异步函数的错误
+        // }
+      })
+
+      element.dataset.id = tab.id
+      elements.add(element);
     }
 
-    const element = template.content.firstElementChild.cloneNode(true);
-
-    // const title = tab.title.split('-')[0].trim();
-    const title = tab.title
-    // const pathname = new URL(tab.url).pathname.slice('/docs'.length);
-    const pathname = tab.url
-    element.querySelector('.title').textContent = title;
-    element.querySelector('.pathname').textContent = pathname;
-    element.querySelector('a').addEventListener('click', async () => {
-      // need to focus window as well as the active tab
-      await chrome.tabs.update(tab.id, { active: true });
-      await chrome.windows.update(tab.windowId, { focused: true });
-
-      await updateTabs()
-    });
-    element.querySelector('button').addEventListener('click', async () => {
-      await chrome.tabs.remove(tab.id, () => { });
-
-      try {
-        const result = await updateTabs(); // 等待异步函数的结果
-        if (result) {
-          // 执行同步函数
-          refreshExt()
-        }
-      } catch (error) {
-        // 处理异步函数的错误
-      }
-    })
-
-    element.dataset.id = tab.id
-    elements.add(element);
+    document.querySelector('ul').append(...elements);
   }
-  document.querySelector('ul').append(...elements);
 }
 refreshExt()
 
@@ -92,16 +96,16 @@ button.addEventListener('click', async () => {
   console.log(tabIds)
   // const tabIds = tabs.map(({ id }) => id);
   const group = await chrome.tabs.group({ tabIds });
-  await chrome.tabGroups.update(group, { title: searchWord ? searchWord : "Docs" });
+  await chrome.tabGroups.update(group, { title: searchUrlWord ? searchUrlWord : "Docs" });
 
-  await updateTabs()
+  // await updateTabs()
 });
 
 const c_button = document.getElementById('close_all');
 c_button.addEventListener('click', async () => {
   const ul = document.querySelector('ul')
   ul.querySelectorAll('li').forEach(element => {
-    chrome.tabs.remove(parseInt(element.dataset.id, 10), async () => {})
+    chrome.tabs.remove(parseInt(element.dataset.id, 10), async () => { })
     ul.removeChild(element);
   });
 });
@@ -110,21 +114,24 @@ const d_button = document.getElementById('discard_all');
 d_button.addEventListener('click', async () => {
   const ul = document.querySelector('ul')
   ul.querySelectorAll('li').forEach(element => {
-    chrome.tabs.discard(parseInt(element.dataset.id, 10), async () => {})
+    chrome.tabs.discard(parseInt(element.dataset.id, 10), async () => { })
     ul.removeChild(element);
   });
 });
 
-const c = document.getElementById('search');
-c.addEventListener("keypress", function (event) {
-  if (event.keyCode === 13) {
-    searchWord = event.target.value
-    // alert("你输入的内容是：" + searchWord);
-    refreshExt()
-  }
+const sU = document.getElementById('searchUrl');
+sU.addEventListener("keyup", function (event) {
+  searchUrlWord = event.target.value
+  refreshExt()
+})
+
+const sT = document.getElementById('searchTitle');
+sT.addEventListener("keyup", function (event) {
+  searchTitleWord = event.target.value
+  refreshExt()
 })
 
 c.addEventListener("blur", function (event) {
-  searchWord = event.target.value
+  searchUrlWord = event.target.value
   refreshExt()
 })
