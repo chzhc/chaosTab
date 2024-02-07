@@ -48,7 +48,7 @@ function refreshExt() {
     // console.log("result", tab.url.includes(searchUrlWord))
     // tab.tabGroups
     if (tab.url.includes(searchUrlWord) && new RegExp(searchTitleWord).test(tab.title)) {
-    
+
       const element = template.content.firstElementChild.cloneNode(true);
       // const title = tab.title.split('-')[0].trim();
 
@@ -131,7 +131,7 @@ sT.addEventListener("keyup", function (event) {
   refreshExt()
 })
 
-c.addEventListener("blur", function (event) {
-  searchUrlWord = event.target.value
-  refreshExt()
-})
+// c.addEventListener("blur", function (event) {
+//   searchUrlWord = event.target.value
+//   refreshExt()
+// })

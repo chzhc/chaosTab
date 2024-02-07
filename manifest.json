@@ -11,6 +11,34 @@
   "action": {
     "default_popup": "popup.html"
   },
-  "host_permissions": ["<all_urls>"],
-  "permissions": ["tabGroups",  "tabs"]
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "permissions": [
+    "tabGroups",
+    "tabs",
+    "activeTab",
+    "scripting",
+    "background"
+  ],
+  "commands": {
+    "new-tab": {
+      "suggested_key": {
+        "default": "Ctrl+B",
+        "mac": "Command+B"
+      },
+      "description": "new tab accordingly"
+    },
+    "_execute_action": {
+      "suggested_key": {
+        "windows": "Ctrl+A",
+        "mac": "Command+A",
+        "chromeos": "Ctrl+A",
+        "linux": "Ctrl+A"
+      }
+    }
+  }
 }
