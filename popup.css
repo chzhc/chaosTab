@@ -1,0 +1,65 @@
+body {
+  width: 25rem;
+  background-color: #f8f9fa;
+}
+
+ul {
+  list-style-type: none;
+  padding-inline-start: 0;
+  margin: 1rem 0;
+}
+
+li {
+  padding: 0.25rem;
+  border-bottom: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+button {
+  border-radius: 5px;
+  background-color: #4CAF50;
+  color: white;
+  cursor: pointer;
+  border: none;
+}
+
+.close {
+  /* color: red; */
+  float: right;
+}
+.control {
+  float: right;
+}
+input{
+  border-radius: 5px;
+}
+/* 
+.group_all {
+  color: blue;
+}
+
+.close_all {
+  color: red;
+}
+
+.discard_all {
+  color: green;
+} */
+
+h3,
+.close {
+  display: inline-block;
+}
+
+li:nth-child(odd) {
+  background-color: #80808030;
+}
+
+li:nth-child(even) {
+  background-color: #ffffff;
+}
+
+h3,
+p {
+  margin: 0;
+}
