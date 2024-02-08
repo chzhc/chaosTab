@@ -27,18 +27,10 @@
   "commands": {
     "new-tab": {
       "suggested_key": {
-        "default": "Ctrl+B",
-        "mac": "Command+B"
+        "default": "Ctrl+T",
+        "mac": "Command+T"
       },
-      "description": "new tab accordingly"
-    },
-    "_execute_action": {
-      "suggested_key": {
-        "windows": "Ctrl+A",
-        "mac": "Command+A",
-        "chromeos": "Ctrl+A",
-        "linux": "Ctrl+A"
-      }
+      "description": "New tab a little bit smarter"
     }
   }
 }
