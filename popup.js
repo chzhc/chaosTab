@@ -43,6 +43,30 @@ function refreshExt() {
   document.querySelector('ul').innerHTML = ''
   // console.log("tabs",tabs)
 
+  // search history
+
+  // let key = 'searchNameHist'
+  // let res = '[]'
+  // let value = res
+  // chrome.storage.local.get([key], function (result) {
+  //   res = result.searchNameHist;
+  //   console.log('Value currently is ', result, res, JSON.stringify(result));
+  //   let queue = []
+  //   try {
+  //     queue = JSON.parse(res);
+  //   } catch (e) {
+  //   }
+  //   console.log("queue", queue)
+  //   if (searchUrlWord.length != 0) {
+  //     queue.push(searchUrlWord);
+  //   }
+
+  //   value = JSON.stringify(queue);
+  //   chrome.storage.local.set({ key: value }, function () {
+  //     console.log('Value is set to ', key, value, JSON.stringify(value));
+  //   });
+  // });
+
   const elements = new Set();
   for (const tab of tabs) {
     // console.log("result", tab.url.includes(searchUrlWord))
@@ -135,3 +159,12 @@ sT.addEventListener("keyup", function (event) {
 //   searchUrlWord = event.target.value
 //   refreshExt()
 // })
+const newItem = document.createElement('li');
+
+newItem.textContent = '新添加的列表项';
+const list = document.querySelector('ol');
+list.appendChild(newItem);
+list.appendChild(newItem);
+list.appendChild(newItem);
+list.appendChild(newItem);
+list.appendChild(newItem);

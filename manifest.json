@@ -22,7 +22,8 @@
     "tabs",
     "activeTab",
     "scripting",
-    "background"
+    "background",
+    "storage"
   ],
   "commands": {
     "new-tab": {

@@ -12,6 +12,7 @@ chrome.commands.onCommand.addListener((command) => {
         callback(tab);
       });
     }
+
     function createTab(tab) {
       chrome.tabs.create(
         { url: 'edge://newtab', 'openerTabId': tab.id, 'index': tab.index + 1 },
