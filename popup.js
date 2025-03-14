@@ -6,26 +6,22 @@ var validURLs = [
   urlAll
 ];
 
-chrome.action;
-
-async function updateTabs() {
-  tabs = await chrome.tabs.query({
-    url: validURLs
-  });
-}
-
 // 初始获取一次标签页信息
 let tabs = await chrome.tabs.query({
   url: validURLs
 });
-
 // 排序collator用于字符串比较排序
 const collator = new Intl.Collator();
 tabs.sort((a, b) => collator.compare(a.url, b.url));
 
 const template = document.getElementById('li_template');
 
-function refreshExt() {
+async function refreshExt() {
+  // 重新查询标签页信息并更新 tabs 变量
+  tabs = await chrome.tabs.query({ url: validURLs });
+  const collator = new Intl.Collator();
+  tabs.sort((a, b) => collator.compare(a.url, b.url));
+
   document.querySelector('ul').innerHTML = '';
 
   const elements = new Set();
@@ -42,16 +38,17 @@ function refreshExt() {
         await chrome.windows.update(tab.windowId, { focused: true });
       });
 
-      element.querySelector('button').addEventListener('click', async () => {
-        await chrome.tabs.remove(tab.id, () => { });
+      element.querySelector('button').addEventListener('click', () => {
+        // 去掉多余的 async
+        chrome.tabs.remove(tab.id, () => { });
       });
 
       element.dataset.id = tab.id;
       elements.add(element);
     }
-
-    document.querySelector('ul').append(...elements);
   }
+  // 移到 for 循环外部
+  document.querySelector('ul').append(...elements);
 }
 refreshExt();
 
@@ -70,9 +67,7 @@ const c_button = document.getElementById('close_all');
 c_button.addEventListener('click', async () => {
   // 记录当前搜索关键词到本地存储搜索有序列表
   chrome.storage.local.get('searchHistory', function (result) {
-    // 如果本地存储中没有搜索历史，则创建一个空数组
     const searchHistory = result.searchHistory || [];
-    // 打印
     console.log("searchHistory", searchHistory);
 
     // 检查搜索历史中是否已经存在相同的搜索关键词
@@ -91,27 +86,42 @@ c_button.addEventListener('click', async () => {
 
     // 限制搜索历史的长度为10，如果超过长度，则删除最旧的搜索关键词
     while (searchHistory.length >= 10) {
-      searchHistory.shift();
+      searchHistory.pop();
     }
-    searchHistory.push(newItem);
+    searchHistory.unshift(newItem);
 
     chrome.storage.local.set({ searchHistory: searchHistory });
   });
 
   const queryItemList = document.querySelector('ul');
+  const removePromises = [];
   queryItemList.querySelectorAll('li').forEach(element => {
-    chrome.tabs.remove(parseInt(element.dataset.id, 10), async () => { });
-    queryItemList.removeChild(element);
+    const removePromise = new Promise((resolve) => {
+      chrome.tabs.remove(parseInt(element.dataset.id, 10), () => {
+        queryItemList.removeChild(element);
+        resolve();
+      });
+    });
+    removePromises.push(removePromise);
   });
+
+  // 等待所有标签页关闭操作完成
+  await Promise.all(removePromises);
+
+  // 调用 refreshExt 函数来更新列表
+  await refreshExt();
 });
 
 const d_button = document.getElementById('discard_all');
-d_button.addEventListener('click', async () => {
+d_button.addEventListener('click', () => {
+  // 去掉多余的 async
   const queryItems = document.querySelector('ul');
   queryItems.querySelectorAll('li').forEach(element => {
-    chrome.tabs.discard(parseInt(element.dataset.id, 10), async () => { });
+    // 去掉多余的 async
+    chrome.tabs.discard(parseInt(element.dataset.id, 10), () => { });
     queryItems.removeChild(element);
   });
+  refreshExt(); // 也需要刷新列表
 });
 
 const sU = document.getElementById('searchUrl');
