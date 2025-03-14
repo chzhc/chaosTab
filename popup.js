@@ -88,6 +88,11 @@ c_button.addEventListener('click', async () => {
       title: searchTitleWord,
       action: 'close'
     };
+
+    // 限制搜索历史的长度为10，如果超过长度，则删除最旧的搜索关键词
+    while (searchHistory.length >= 10) {
+      searchHistory.shift();
+    }
     searchHistory.push(newItem);
 
     chrome.storage.local.set({ searchHistory: searchHistory });
