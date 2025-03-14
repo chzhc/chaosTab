@@ -5,25 +5,17 @@ var searchTitleWord = '';
 var validURLs = [
   urlAll
 ];
-
-// // 初始获取一次标签页信息
-// let tabs = await chrome.tabs.query({
-//   url: validURLs
-// });
-// // 排序collator用于字符串比较排序
-// const collator = new Intl.Collator();
-// tabs.sort((a, b) => collator.compare(a.url, b.url));
-
+// Get the template element
 const template = document.getElementById('li_template');
 
-// 过滤符合条件的标签页
+// Filter tabs that meet the conditions
 function filterTabs(tabs, searchUrlWord, searchTitleWord) {
   return tabs.filter(tab => {
     return tab.url.includes(searchUrlWord) && new RegExp(searchTitleWord).test(tab.title);
   });
 }
 
-// 根据过滤结果创建元素
+// Create elements based on the filtered results
 function createElements(filteredTabs, template) {
 
   const elements = new Set();
@@ -34,13 +26,13 @@ function createElements(filteredTabs, template) {
     element.querySelector('.title').textContent = title;
     element.querySelector('.pathname').textContent = pathname;
     element.querySelector('a').addEventListener('click', async () => {
-      // need to focus window as well as the active tab
+      // Need to focus the window as well as the active tab
       await chrome.tabs.update(tab.id, { active: true });
       await chrome.windows.update(tab.windowId, { focused: true });
     });
 
     element.querySelector('button').addEventListener('click', () => {
-      // 去掉多余的 async
+      // Remove the redundant 'async'
       chrome.tabs.remove(tab.id, () => { });
     });
 
@@ -51,10 +43,10 @@ function createElements(filteredTabs, template) {
 }
 
 async function refreshExt() {
-  // 重新查询标签页信息并更新 tabs 变量
+  // Query tab information again and update the 'tabs' variable
   const filteredTabs = await queryAndFilterTabs(searchUrlWord, searchTitleWord);
 
-  // 根据过滤结果创建元素
+  // Create elements based on the filtered results
   const elements = createElements(filteredTabs, template);
 
   document.querySelector('ul').innerHTML = '';
@@ -65,7 +57,7 @@ refreshExt();
 
 const button = document.getElementById('group_all');
 button.addEventListener('click', async () => {
-  // 记录当前搜索关键词到本地存储搜索有序列表
+  // Record the current search keywords to the local storage search ordered list
   await new Promise((resolve) => {
     if (searchUrlWord === '' && searchTitleWord === '') {
       resolve();
@@ -75,7 +67,7 @@ button.addEventListener('click', async () => {
       const searchHistory = result.searchHistory || [];
       console.log("searchHistory", searchHistory);
 
-      // 限制搜索历史的长度为10，如果超过长度，则删除最旧的搜索关键词
+      // Limit the length of the search history to 10. If it exceeds, delete the oldest search keyword
       addItemToSearchHistory(searchHistory, {
         url: searchUrlWord,
         title: searchTitleWord,
@@ -90,13 +82,13 @@ button.addEventListener('click', async () => {
   });
   console.log(tabIds);
   const group = await chrome.tabs.group({ tabIds });
-  await chrome.tabGroups.update(group, { title: searchUrlWord ? searchUrlWord : "Docs" });
+  await chrome.tabGroups.update(group, { title: searchUrlWord ? searchUrlWord : (searchTitleWord ? searchTitleWord : "Docs") });
   await refreshExt();
 });
 
 const c_button = document.getElementById('close_all');
 c_button.addEventListener('click', async () => {
-  // 记录当前搜索关键词到本地存储搜索有序列表
+  // Record the current search keywords to the local storage search ordered list
   await new Promise((resolve) => {
     if (searchUrlWord === '' && searchTitleWord === '') {
       resolve();
@@ -107,7 +99,7 @@ c_button.addEventListener('click', async () => {
       const searchHistory = result.searchHistory || [];
       console.log("searchHistory", searchHistory);
 
-      // 限制搜索历史的长度为10，如果超过长度，则删除最旧的搜索关键词
+      // Limit the length of the search history to 10. If it exceeds, delete the oldest search keyword
       addItemToSearchHistory(searchHistory, {
         url: searchUrlWord,
         title: searchTitleWord,
@@ -128,16 +120,16 @@ c_button.addEventListener('click', async () => {
     removePromises.push(removePromise);
   });
 
-  // 等待所有标签页关闭操作完成
+  // Wait for all tab closing operations to complete
   await Promise.all(removePromises);
 
-  // 调用 refreshExt 函数来更新列表
+  // Call the refreshExt function to update the list
   await refreshExt();
 });
 
 const d_button = document.getElementById('discard_all');
 d_button.addEventListener('click', async () => {
-  // 记录当前搜索关键词到本地存储搜索有序列表
+  // Record the current search keywords to the local storage search ordered list
   await new Promise((resolve) => {
     if (searchUrlWord === '' && searchTitleWord === '') {
       resolve();
@@ -148,7 +140,7 @@ d_button.addEventListener('click', async () => {
       const searchHistory = result.searchHistory || [];
       console.log("searchHistory", searchHistory);
 
-      // 限制搜索历史的长度为10，如果超过长度，则删除最旧的搜索关键词
+      // Limit the length of the search history to 10. If it exceeds, delete the oldest search keyword
       addItemToSearchHistory(searchHistory, {
         url: searchUrlWord,
         title: searchTitleWord,
@@ -163,7 +155,7 @@ d_button.addEventListener('click', async () => {
     // queryItems.removeChild(element);
   });
 
-  await refreshExt(); // 也需要刷新列表
+  await refreshExt(); // Also need to refresh the list
 });
 
 const sU = document.getElementById('searchUrl');
@@ -182,25 +174,25 @@ async function queryAndFilterTabs(searchUrlWord, searchTitleWord) {
   let tabs = await chrome.tabs.query({ url: validURLs });
   const collator = new Intl.Collator();
   tabs.sort((a, b) => collator.compare(a.url, b.url));
-  // 过滤标签页
+  // Filter tabs
   const filteredTabs = filterTabs(tabs, searchUrlWord, searchTitleWord);
   return filteredTabs;
 }
 
 function addItemToSearchHistory(searchHistory, newItem, resolve) {
-  // 检查搜索历史中是否已经存在相同的搜索关键词
+  // Check if the same search keyword already exists in the search history
   const existingItem = searchHistory.find(item => item.url === newItem.url && item.title === newItem.title && item.action === newItem.action);
   if (existingItem) {
-    // 如果已经存在相同的搜索关键词，则将其从搜索历史中删除
+    // If the same search keyword already exists, remove it from the search history
     searchHistory.splice(searchHistory.indexOf(existingItem), 1);
   }
 
-  // 限制搜索历史的长度为100，如果超过长度，则删除最旧的搜索关键词
+  // Limit the length of the search history to 100. If it exceeds, delete the oldest search keyword
   while (searchHistory.length >= 100) {
     searchHistory.pop();
   }
 
-  // 将新的搜索关键词添加到搜索历史的开头
+  // Add the new search keyword to the beginning of the search history
   searchHistory.unshift(newItem);
 
   chrome.storage.local.set({ searchHistory: searchHistory }, () => {
@@ -211,24 +203,24 @@ function addItemToSearchHistory(searchHistory, newItem, resolve) {
 function updateGetSearchHistory() {
   chrome.storage.local.get('searchHistory', function (result) {
     const list = document.querySelector('ol');
-    // 清空列表
+    // Clear the list
     list.innerHTML = '';
 
     const searchHistory = result.searchHistory || [];
     console.log("searchHistory", searchHistory);
 
-    // 仅展示最近的10个历史记录
+    // Only display the latest 10 historical records
     const recentHistory = searchHistory.slice(0, 10);
 
-    // 按照 recentHistory 数组的顺序添加历史项
+    // Add historical items in the order of the recentHistory array
     recentHistory.forEach(item => {
       const newItem = document.createElement('li');
       newItem.textContent = item.title + ' ' + item.url;
 
-      // 创建执行按钮
+      // Create an execution button
       const executeButton = document.createElement('button');
       executeButton.classList.add('execute-button');
-      executeButton.textContent = '执行' + translateAction(item.action);
+      executeButton.textContent = 'Execute ' + translateAction(item.action);
       executeButton.addEventListener('click', async () => {
         try {
           if (item.action === 'close') {
@@ -245,24 +237,24 @@ function updateGetSearchHistory() {
             const tabs = await queryAndFilterTabs(item.url, item.title);
             const tabIds = tabs.map(tab => tab.id);
             const group = await chrome.tabs.group({ tabIds });
-            await chrome.tabGroups.update(group, { title: item.url ? item.url : "Docs" });
+            await chrome.tabGroups.update(group, { title: item.url ? item.url : (item.title ? item.title : "Docs") });
           }
           await refreshExt();
         } catch (error) {
-          console.error('执行操作时出错:', error);
+          console.error('Error executing the operation:', error);
         }
       });
 
-      // 将按钮添加到列表项中
+      // Add the button to the list item
       newItem.appendChild(executeButton);
 
       newItem.addEventListener('click', async function (event) {
         if (event.target.matches('.execute-button')) {
-          // 按钮点击事件已在上面处理
+          // The button click event is handled above
           return;
         }
-        // 处理其他点击事件
-        // 将对应的内容写到文本框 searchUrl 以及 searchTitle 中
+        // Handle other click events
+        // Write the corresponding content to the text boxes 'searchUrl' and 'searchTitle'
         const searchUrlInput = document.getElementById('searchUrl');
         const searchTitleInput = document.getElementById('searchTitle');
         searchUrlInput.value = item.url;
@@ -279,32 +271,32 @@ function updateGetSearchHistory() {
 
 function translateAction(action) {
   if (action === 'close') {
-    return '关闭❌';
+    return 'Close ❌';
   } else if (action === 'discard') {
-    return '丢弃🗑️';
+    return 'Discard 🗑️';
   } else if (action === 'group') {
-    return '分组🗂️';
+    return 'Group 🗂️';
   }
 }
 
-// 获取 clear 按钮元素
+// Get the 'clear' button element
 const clearSearchUrlButton = document.getElementById('clearSearchUrl');
-// 为 clear 按钮添加点击事件监听器
+// Add a click event listener to the 'clear' button
 clearSearchUrlButton.addEventListener('click', function () {
   const searchUrlInput = document.getElementById('searchUrl');
   const searchTitleInput = document.getElementById('searchTitle');
 
-  // 清空输入框内容
+  // Clear the input box content
   searchUrlInput.value = '';
   searchTitleInput.value = '';
-  // 清空 searchUrlWord 变量
+  // Clear the 'searchUrlWord' variable
   searchUrlWord = '';
   searchTitleWord = '';
-  // 刷新扩展以更新标签页显示
+  // Refresh the extension to update the tab display
   refreshExt();
 });
 
-// newItem.textContent = '搜索历史1';
+// newItem.textContent = 'Search History 1';
 // const list = document.querySelector('ol');
 // list.appendChild(newItem);
 // list.appendChild(newItem.cloneNode(true));
@@ -312,12 +304,12 @@ clearSearchUrlButton.addEventListener('click', function () {
 // list.appendChild(newItem.cloneNode(true));
 // list.appendChild(newItem.cloneNode(true));
 
-// 获取导出按钮元素
+// Get the export button element
 const exportButton = document.getElementById('exportHistory');
-// 为导出按钮添加点击事件监听器
+// Add a click event listener to the export button
 exportButton.addEventListener('click', async () => {
   try {
-    // 获取本地存储中的搜索历史
+    // Get the search history from local storage
     const result = await new Promise((resolve) => {
       chrome.storage.local.get('searchHistory', function (result) {
         resolve(result);
@@ -325,24 +317,24 @@ exportButton.addEventListener('click', async () => {
     });
     const searchHistory = result.searchHistory || [];
 
-    // 将搜索历史转换为 JSON 字符串
+    // Convert the search history to a JSON string
     const jsonData = JSON.stringify(searchHistory, null, 2);
 
-    // 创建一个 Blob 对象来存储 JSON 数据
+    // Create a Blob object to store the JSON data
     const blob = new Blob([jsonData], { type: 'application/json' });
 
-    // 创建一个下载链接
+    // Create a download link
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = 'search_history.json';
 
-    // 模拟点击下载链接
+    // Simulate a click on the download link
     a.click();
 
-    // 释放 URL 对象
+    // Release the URL object
     URL.revokeObjectURL(url);
   } catch (error) {
-    console.error('导出搜索历史时出错:', error);
+    console.error('Error exporting search history:', error);
   }
 });
