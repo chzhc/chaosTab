@@ -269,6 +269,42 @@ function updateGetSearchHistory() {
   });
 }
 
+// 新增重复标签整理功能
+document.getElementById('deduplicate').addEventListener('click', async () => {
+  const allTabs = await chrome.tabs.query({});
+  const urlCountMap = new Map();
+
+  // 统计URL出现次数
+  allTabs.forEach(tab => {
+    urlCountMap.set(tab.title, (urlCountMap.get(tab.title) || 0) + 1);
+  });
+
+  // 过滤需要关闭的重复标签
+  const tabsToClose = allTabs.filter(tab => {
+    return urlCountMap.get(tab.title) > 1 && !tab.active;
+  });
+
+  // 关闭重复标签（保留最近激活的）
+  await Promise.all(tabsToClose.map(tab =>
+    chrome.tabs.remove(tab.id)
+  ));
+
+  // 记录操作历史
+  await new Promise(resolve => {
+    chrome.storage.local.get('searchHistory', result => {
+      const searchHistory = result.searchHistory || [];
+      addItemToSearchHistory(searchHistory, {
+        action: 'deduplicate',
+        url: '重复标签整理',
+        title: `已清理${tabsToClose.length}个重复标签`
+      }, resolve);
+    });
+  });
+
+  refreshExt();
+});
+
+// 更新操作类型翻译
 function translateAction(action) {
   if (action === 'close') {
     return 'Close ❌';
@@ -276,6 +312,8 @@ function translateAction(action) {
     return 'Discard 🗑️';
   } else if (action === 'group') {
     return 'Group 🗂️';
+  } else if (action === 'deduplicate') {
+    return '整理重复标签 🔄';
   }
 }
 

@@ -15,7 +15,7 @@ chrome.commands.onCommand.addListener((command) => {
 
     function createTab(tab) {
       chrome.tabs.create(
-        { url: 'edge://newtab', 'openerTabId': tab.id, 'index': tab.index + 1 },
+        { url: 'chrome://newtab', 'openerTabId': tab.id, 'index': tab.index + 1 },
         (tabc) => {
           if (tab.groupId != undefined){
             chrome.tabs.group({
