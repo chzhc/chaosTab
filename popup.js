@@ -274,30 +274,50 @@ document.getElementById('deduplicate').addEventListener('click', async () => {
   const allTabs = await chrome.tabs.query({});
   const urlCountMap = new Map();
 
-  // 统计URL出现次数
+  // 统计title出现次数
   allTabs.forEach(tab => {
     urlCountMap.set(tab.title, (urlCountMap.get(tab.title) || 0) + 1);
   });
-
+  const dupTitle = new Map();
   // 过滤需要关闭的重复标签
   const tabsToClose = allTabs.filter(tab => {
-    return urlCountMap.get(tab.title) > 1 && !tab.active;
+    if (urlCountMap.get(tab.title) > 1 && !tab.active) {
+      dupTitle.set(tab.title, 1);
+      return true;
+    }
+    return false;
   });
 
+  // 按照打开时间排序
+  tabsToClose.sort((a, b) => a.index - b.index);
+
   // 关闭重复标签（保留最近激活的）
-  await Promise.all(tabsToClose.map(tab =>
-    chrome.tabs.remove(tab.id)
+  await Promise.all(tabsToClose.map(tab => {
+    urlCountMap.set(tab.title, urlCountMap.get(tab.title) - 1)
+    if (urlCountMap.get(tab.title) >= 1) {
+      chrome.tabs.remove(tab.id)
+      console.log(`已关闭重复标签：${tab.title}`);
+    }
+  }
   ));
 
   // 记录操作历史
   await new Promise(resolve => {
     chrome.storage.local.get('searchHistory', result => {
       const searchHistory = result.searchHistory || [];
-      addItemToSearchHistory(searchHistory, {
-        action: 'deduplicate',
-        url: '重复标签整理',
-        title: `已清理${tabsToClose.length}个重复标签`
-      }, resolve);
+      if (dupTitle.size > 0) {
+        addItemToSearchHistory(searchHistory, {
+          action: 'deduplicate',
+          url: Array.from(dupTitle.keys()).join('\n'),
+          title: `已清理${dupTitle.size}个重复标签`
+        }, resolve);
+      } else {
+        addItemToSearchHistory(searchHistory, {
+          action: 'deduplicate',
+          url: '清理',
+          title: `未发现重复标签`
+        }, resolve);
+      }
     });
   });
 
